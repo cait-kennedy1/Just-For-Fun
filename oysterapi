@@ -1,0 +1,29 @@
+import { kv } from '@vercel/kv';
+
+const KEY = 'oyster-farm-data-v1';
+
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const data = await kv.get(KEY);
+      return res.status(200).json(data || null);
+    } catch (err) {
+      console.error('KV read failed', err);
+      return res.status(500).json({ error: 'Failed to load farm data' });
+    }
+  }
+
+  if (req.method === 'POST') {
+    try {
+      const body = req.body || {};
+      await kv.set(KEY, body);
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('KV write failed', err);
+      return res.status(500).json({ error: 'Failed to save farm data' });
+    }
+  }
+
+  res.setHeader('Allow', ['GET', 'POST']);
+  return res.status(405).json({ error: `Method ${req.method} not allowed` });
+}
